@@ -1,4 +1,4 @@
-package gonetdicom
+package dicomweb
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/rronan/gonetdicom/pkg/dicomutil"
+	"github.com/rronan/gonetdicom/dicomutil"
 	"github.com/suyashkumar/dicom"
 )
 
