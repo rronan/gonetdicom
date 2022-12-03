@@ -7,7 +7,7 @@ import (
 	"github.com/rronan/gonetdicom/dicomutil"
 )
 
-func Test_GetDicomWeb(t *testing.T) {
+func Test_Get(t *testing.T) {
 	url := getenv("MILVUE_URL", "")
 	token := getenv("MILVUE_TOKEN", "")
 	headers := map[string]string{"x-goog-meta-owner": token, "Content-Type": "multipart/related; type=application/dicom"}
