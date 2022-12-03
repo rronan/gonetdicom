@@ -26,6 +26,9 @@ func MakeGetRequest(url string, headers map[string]string) (*http.Response, erro
 	if err != nil {
 		return &http.Response{}, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return &http.Response{}, errors.New(fmt.Sprintf("HTTP Status: %d", resp.StatusCode))
+	}
 	return resp, nil
 }
 
