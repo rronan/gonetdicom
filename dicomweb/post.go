@@ -33,7 +33,7 @@ func WriteMultipart(dcm_slice []*dicom.Dataset) (*[]byte, string, error) {
 	return &b, content_type, nil
 }
 
-func MakePostRequest(url string, data *[]byte, headers map[string]string) error {
+func PostMultipart(url string, data *[]byte, headers map[string]string) error {
 	req, err := http.NewRequest("POST", url, bytes.NewReader(*data))
 	if err != nil {
 		return err
@@ -52,12 +52,12 @@ func MakePostRequest(url string, data *[]byte, headers map[string]string) error 
 	return nil
 }
 
-func PostDicomWeb(url string, dcm_slice []*dicom.Dataset, headers map[string]string) error {
+func Post(url string, dcm_slice []*dicom.Dataset, headers map[string]string) error {
 	b, content_type, err := WriteMultipart(dcm_slice)
 	if err != nil {
 		return err
 	}
 	headers["Content-Type"] = content_type
-	err = MakePostRequest(url, b, headers)
+	err = PostMultipart(url, b, headers)
 	return err
 }
