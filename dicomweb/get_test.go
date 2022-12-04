@@ -11,7 +11,7 @@ func Test_Get(t *testing.T) {
 	url := getenv("MILVUE_URL", "")
 	token := getenv("MILVUE_TOKEN", "")
 	headers := map[string]string{"x-goog-meta-owner": token, "Content-Type": "multipart/related; type=application/dicom"}
-	dcm_slice, b, err := GetDicomWeb(url, headers)
+	dcm_slice, b, err := Get(url, headers)
 	if err != nil {
 		panic(err)
 	}

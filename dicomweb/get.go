@@ -69,7 +69,7 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, []byte, error) {
 	return res, []byte{}, nil
 }
 
-func GetDicomWeb(url string, headers map[string]string) ([]*dicom.Dataset, []byte, error) {
+func Get(url string, headers map[string]string) ([]*dicom.Dataset, []byte, error) {
 	resp, err := MakeGetRequest(url, headers)
 	if err != nil {
 		return []*dicom.Dataset{}, []byte{}, err
