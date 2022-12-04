@@ -13,7 +13,7 @@ import (
 	"github.com/suyashkumar/dicom"
 )
 
-func MakeGetRequest(url string, headers map[string]string) (*http.Response, error) {
+func GetMultipart(url string, headers map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return &http.Response{}, err
@@ -70,7 +70,7 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, []byte, error) {
 }
 
 func Get(url string, headers map[string]string) ([]*dicom.Dataset, []byte, error) {
-	resp, err := MakeGetRequest(url, headers)
+	resp, err := GetMultipart(url, headers)
 	if err != nil {
 		return []*dicom.Dataset{}, []byte{}, err
 	}
