@@ -1,4 +1,4 @@
-package gonetcommands
+package storescp
 
 // import (
 // 	"bytes"
