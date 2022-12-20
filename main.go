@@ -103,33 +103,6 @@ func handleConnection(conn net.Conn) {
 
 func encodeAssociateAc(assocAc associate_ac_struct) []byte {
 	var data []byte
-	data = append(data, assocAc.pduType)
-	data = append(data, assocAc.reserved)
-	data = append(data, assocAc.length[:]...)
-	data = append(data, assocAc.protocolVersion)
-	data = append(data, assocAc.reserved2)
-	data = append(data, assocAc.calledAETitle[:]...)
-	data = append(data, assocAc.callingAETitle[:]...)
-	data = append(data, assocAc.reserved3[:]...)
-	data = append(data, assocAc.variableItems.applicationContext.itemType)
-	data = append(data, assocAc.variableItems.applicationContext.reserved)
-	data = append(data, assocAc.variableItems.applicationContext.length[:]...)
-	data = append(data, assocAc.variableItems.applicationContext.applicationContextName[:]...)
-	data = append(data, assocAc.variableItems.presentationContext[0].itemType)
-	data = append(data, assocAc.variableItems.presentationContext[0].reserved)
-	data = append(data, assocAc.variableItems.presentationContext[0].length[:]...)
-	data = append(data, assocAc.variableItems.presentationContext[0].presentationContextID)
-	data = append(data, assocAc.variableItems.presentationContext[0].reserved2)
-	data = append(data, assocAc.variableItems.presentationContext[0].reserved3)
-	data = append(data, assocAc.variableItems.presentationContext[0].reserved4)
-	data = append(data, assocAc.variableItems.presentationContext[0].abstractSyntax.itemType)
-	data = append(data, assocAc.variableItems.presentationContext[0].abstractSyntax.reserved)
-	data = append(data, assocAc.variableItems.presentationContext[0].abstractSyntax.length[:]...)
-	data = append(data, assocAc.variableItems.presentationContext[0].abstractSyntax.abstractSyntaxName[:]...)
-	data = append(data, assocAc.variableItems.presentationContext[0].transferSyntax[0].itemType)
-	data = append(data, assocAc.variableItems.presentationContext[0].transferSyntax[0].reserved)
-	data = append(data, assocAc.variableItems.presentationContext[0].transferSyntax[0].length[:]...)
-	data = append(data, assocAc.variableItems.presentationContext[0].transferSyntax[0].transferSyntaxName[:]...)
 	return data
 }
 
