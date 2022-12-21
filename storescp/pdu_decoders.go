@@ -2,47 +2,9 @@ package storescp
 
 import (
 	"encoding/binary"
-	"errors"
 )
 
-// type Decoder interface {
-// 	Decode() (interface{}, error)
-// }
-
-func Decode(b []byte) (interface{}, error) {
-	switch b[0] {
-	case 0x01:
-		return decodeAAssociateRQ(b)
-	case 0x02:
-		return decodeAAssociateRQ(b)
-	// case 0x03:
-	// 	return decodeAssociateRJ(b)
-	// case 0x04:
-	// 	return decodePDataTF(b)
-	// case 0x05:
-	// 	return decodeReleaseRQ(b)
-	// case 0x06:
-	// 	return decodeReleaseRP(b)
-	// case 0x07:
-	// 	return decodeAbort(b)
-	// case 0x10:
-	// 	return decodeApplicationContext(b)
-	// case 0x20:
-	// 	return decodePresentationContext(b)
-	// case 0x30:
-	// 	return decodeAbstractSyntax(b)
-	// case 0x40:
-	// 	return decodeTransferSyntax(b)
-	// case 0x50:
-	// 	return decodeUserInfo(b)
-	// case 0x21:
-	// 	return decodePresentationContextItem(b)
-	default:
-		return nil, errors.New("unknown pdu type")
-	}
-}
-
-func decodeAAssociateRQ(b []byte) (Associate, error) {
+func DecodeAAssociateRQ(b []byte) (Associate, error) {
 	var a Associate
 	a.pduType = b[0]
 	a.reserved = b[1]
@@ -53,19 +15,6 @@ func decodeAAssociateRQ(b []byte) (Associate, error) {
 	a.callingAETitle = getAETitle(b[26:42])
 	a.reserved3 = getBigReserved(b[42:74])
 	a.variableItems, _ = decodeVariableItems(b[74:])
-	return a, nil
-}
-
-func (a Associate) Decode(b []byte) (Associate, error) {
-	a.pduType = b[0]
-	a.reserved = b[1]
-	copy(b[2:6], a.length[:])
-	copy(b[6:8], a.protocolVersion[:])
-	a.reserved2 = [2]byte{b[8], b[9]}
-	a.calledAETitle = getAETitle(b[10:26])
-	a.callingAETitle = getAETitle(b[26:42])
-	a.reserved3 = getBigReserved(b[42:74])
-	// a.variableItems, _ = decodeVariableItems(b[74:])
 	return a, nil
 }
 
@@ -110,10 +59,6 @@ func getBigReserved(data []byte) [32]byte {
 	var arr [32]byte
 	copy(data[42:74], arr[:])
 	return arr
-}
-
-type PDU interface {
-	Associate | VariableItems | ApplicationContext | PresentationContext | AbstractSyntax | TransferSyntax | UserInfo | UserData
 }
 
 type Associate struct {
