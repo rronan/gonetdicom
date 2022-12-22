@@ -2,14 +2,15 @@ package storescp
 
 import (
 	"encoding/binary"
+	"fmt"
 )
 
 func DecodeAAssociateRQ(b []byte) (Associate, error) {
 	var a Associate
 	a.pduType = b[0]
 	a.reserved = b[1]
-	copy(b[2:6], a.length[:])
-	copy(b[6:8], a.protocolVersion[:])
+	copy(a.length[:], b[2:6])
+	copy(a.protocolVersion[:], b[6:8])
 	a.reserved2 = [2]byte{b[8], b[9]}
 	a.calledAETitle = getAETitle(b[10:26])
 	a.callingAETitle = getAETitle(b[26:42])
@@ -31,8 +32,9 @@ func decodeApplicationContext(b []byte) (ApplicationContext, int) {
 	var a ApplicationContext
 	a.itemType = b[0]
 	a.reserved = b[1]
-	copy(b[2:4], a.length[:])
+	copy(a.length[:], b[2:4])
 	a.applicationContextName = b[4 : 4+binary.BigEndian.Uint16(b[2:4])]
+	fmt.Println("a.applicationContextName:", a.applicationContextName)
 	return a, 4 + int(binary.BigEndian.Uint16(a.length[:]))
 }
 
@@ -40,7 +42,7 @@ func decodePresentationContext(b []byte) ([]PresentationContext, int) {
 	var p []PresentationContext
 	p[0].itemType = b[0]
 	p[0].reserved = b[1]
-	copy(b[2:4], p[0].length[:])
+	copy(p[0].length[:], b[2:4])
 	p[0].presentationContextID = b[4]
 	p[0].reserved2 = b[5]
 	p[0].reserved3 = b[6]
@@ -51,13 +53,13 @@ func decodePresentationContext(b []byte) ([]PresentationContext, int) {
 
 func getAETitle(data []byte) [16]byte {
 	var arr [16]byte
-	copy(data[10:26], arr[:])
+	copy(arr[:], data[10:26])
 	return arr
 }
 
 func getBigReserved(data []byte) [32]byte {
 	var arr [32]byte
-	copy(data[42:74], arr[:])
+	copy(arr[:], data[42:74])
 	return arr
 }
 
