@@ -6,6 +6,5 @@ import (
 
 func TestStoreSCP(t *testing.T) {
 	Storescp()
-	// PrintAARQ()
 	// Echocheat()
 }

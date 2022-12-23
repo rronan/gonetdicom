@@ -1,6 +1,7 @@
 package storescp
 
 import (
+	"fmt"
 	"net"
 )
 
@@ -44,6 +45,7 @@ func handleConnection2(conn net.Conn) {
 			if err != nil {
 				panic(err)
 			}
+			fmt.Println(buf2[:n2])
 			conn.Write(buf2[:n2])
 			n3, err := conn.Read(buf3)
 			if err != nil {
