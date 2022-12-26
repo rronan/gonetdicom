@@ -44,6 +44,7 @@ conn:
 			fmt.Println("Association request received from Service User")
 			message = trimMessage(message) // trimmed because the initial byte slice is 1024 bytes long which messes up the decoding
 			AARQStruct, err := DecodeAAssociateRQ(message)
+			fmt.Println(AARQStruct.ToString())
 			if err != nil {
 				panic(err)
 			}
@@ -52,35 +53,35 @@ conn:
 				itemType:  0x51,
 				reserved:  0x00,
 				length:    [2]byte{0x00, 0x04},
-				maxLength: 0x4000,
+				maxLength: [4]byte{0x00, 0x00, 0x40, 0x00},
 			}
 			ACUserInfo := UserInfo{
 				itemType: 0x50,
 				reserved: 0x00,
-				length:   [2]byte{0x00, 0x3A},
+				length:   [2]byte{0x00, 0x08},
 				subItem:  ACSubItem,
 			}
 			ACTransferSyntax := TransferSyntax{
 				itemType:           0x40,
 				reserved:           0x00,
-				transferSyntaxName: AARQStruct.variableItems.presentationContext[0].transferSyntax[0].transferSyntaxName,
+				transferSyntaxName: AARQStruct.variableItems.presentationContextList[0].transferSyntaxList[0].transferSyntaxName,
 			}
-			ACTransferSyntaxArray := []TransferSyntax{ACTransferSyntax}
 			binary.BigEndian.PutUint16(ACTransferSyntax.length[:], uint16(len(ACTransferSyntax.transferSyntaxName)))
+			ACTransferSyntaxArray := []TransferSyntax{ACTransferSyntax}
 			ACAbstractSyntax := AbstractSyntax{
 				itemType:           0x30,
 				reserved:           0x00,
-				abstractSyntaxName: AARQStruct.variableItems.presentationContext[0].abstractSyntax.abstractSyntaxName,
+				abstractSyntaxName: AARQStruct.variableItems.presentationContextList[0].abstractSyntax.abstractSyntaxName,
 			}
 			binary.BigEndian.PutUint16(ACAbstractSyntax.length[:], uint16(len(ACAbstractSyntax.abstractSyntaxName)))
 			ACPresentationContext := PresentationContext{
 				itemType:              0x21,
 				reserved:              0x00,
-				presentationContextID: AARQStruct.variableItems.presentationContext[0].presentationContextID,
+				presentationContextID: AARQStruct.variableItems.presentationContextList[0].presentationContextID,
 				reserved2:             0x00,
 				resultReason:          0x00,
 				reserved3:             0x00,
-				transferSyntax:        ACTransferSyntaxArray,
+				transferSyntaxList:    ACTransferSyntaxArray,
 			}
 			binary.BigEndian.PutUint16(ACPresentationContext.length[:], uint16(len(ACTransferSyntax.transferSyntaxName)+8))
 			ACApplicationContext := ApplicationContext{
@@ -91,7 +92,7 @@ conn:
 			binary.BigEndian.PutUint16(ACApplicationContext.length[:], uint16(len(ACApplicationContext.applicationContextName)))
 			ACVariableItems := VariableItems{
 				applicationContext: ACApplicationContext,
-				presentationContext: []PresentationContext{
+				presentationContextList: []PresentationContext{
 					ACPresentationContext,
 				},
 				userInfo: ACUserInfo,
@@ -107,20 +108,22 @@ conn:
 				reserved3:       [32]byte{0x00},
 				variableItems:   ACVariableItems,
 			}
-			fmt.Printf("AAACStruct %+v \n", AAACStruct)
 
 			mint := binary.BigEndian.Uint16(ACVariableItems.applicationContext.length[:])
-			mint2 := binary.BigEndian.Uint16(ACVariableItems.presentationContext[0].length[:])
+			mint2 := binary.BigEndian.Uint16(ACVariableItems.presentationContextList[0].length[:])
 			mint3 := binary.BigEndian.Uint16(ACVariableItems.userInfo.length[:])
 
-			binary.BigEndian.PutUint32(AAACStruct.length[:], uint32(mint+mint2+mint3+27))
+			binary.BigEndian.PutUint32(AAACStruct.length[:], uint32(mint+mint2+mint3+2+2+16+16+32))
+			fmt.Println(AAACStruct.ToString())
+
 			ACmessage, _ := EncodeAAssociateAC(AAACStruct)
+
 			n, err := conn.Write(ACmessage[:])
-			fmt.Println(n)
-			fmt.Println("ACMessage", ACmessage)
 			if err != nil {
 				panic(err)
 			}
+			fmt.Println(n)
+
 			buf2 := make([]byte, 512)
 			n2, err := conn.Read(buf2)
 			if err != nil {

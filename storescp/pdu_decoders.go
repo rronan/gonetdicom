@@ -32,7 +32,7 @@ func EncodeAAssociateAC(a Associate) ([]byte, error) {
 	b = append(b, a.variableItems.applicationContext.reserved)
 	b = append(b, a.variableItems.applicationContext.length[:]...)
 	b = append(b, a.variableItems.applicationContext.applicationContextName[:]...)
-	for _, p := range a.variableItems.presentationContext {
+	for _, p := range a.variableItems.presentationContextList {
 		b = append(b, p.itemType)
 		b = append(b, p.reserved)
 		b = append(b, p.length[:]...)
@@ -40,7 +40,7 @@ func EncodeAAssociateAC(a Associate) ([]byte, error) {
 		b = append(b, p.reserved2)
 		b = append(b, p.resultReason)
 		b = append(b, p.reserved3)
-		for _, t := range p.transferSyntax {
+		for _, t := range p.transferSyntaxList {
 			b = append(b, t.itemType)
 			b = append(b, t.reserved)
 			b = append(b, t.length[:]...)
@@ -53,7 +53,7 @@ func EncodeAAssociateAC(a Associate) ([]byte, error) {
 	b = append(b, a.variableItems.userInfo.subItem.itemType)
 	b = append(b, a.variableItems.userInfo.subItem.reserved)
 	b = append(b, a.variableItems.userInfo.subItem.length[:]...)
-	b = append(b, byte(a.variableItems.userInfo.subItem.maxLength))
+	b = append(b, a.variableItems.userInfo.subItem.maxLength[:]...)
 	return b, nil
 }
 
@@ -62,7 +62,7 @@ func decodeVariableItems(b []byte) (VariableItems, int) {
 	var appContextLenght int
 	var presContextLenght int
 	v.applicationContext, appContextLenght = decodeApplicationContext(b)
-	v.presentationContext, presContextLenght = decodePresentationContext(b[appContextLenght:])
+	v.presentationContextList, presContextLenght = decodePresentationContext(b[appContextLenght:])
 	v.userInfo, _ = decodeUserInfo(b[appContextLenght+presContextLenght:])
 	return v, len(b)
 }
@@ -82,7 +82,7 @@ func decodeSubItem(b []byte) (SubItem, int) {
 	s.itemType = b[0]
 	s.reserved = b[1]
 	copy(s.length[:], b[2:4])
-	s.maxLength = binary.BigEndian.Uint32(b[4:8])
+	copy(s.maxLength[:], b[4:8])
 	return s, 8
 }
 
@@ -109,7 +109,7 @@ func decodePresentationContext(b []byte) ([]PresentationContext, int) {
 	p[0].resultReason = b[6]
 	p[0].reserved3 = b[7]
 	p[0].abstractSyntax, abstractSyntaxLenght = decodeAbstractSyntax(b[8:])
-	p[0].transferSyntax, transferSyntaxLenght = decodeTransferSyntax(b[8+abstractSyntaxLenght:])
+	p[0].transferSyntaxList, transferSyntaxLenght = decodeTransferSyntax(b[8+abstractSyntaxLenght:])
 
 	// recursive call to decode more than one presentation context
 	if len(b) > 8+abstractSyntaxLenght+transferSyntaxLenght {

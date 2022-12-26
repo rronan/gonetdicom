@@ -45,7 +45,17 @@ func handleConnection2(conn net.Conn) {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println(buf2[:n2])
+			// Below is not needed, just for debugging
+			// fmt.Println("buf2", buf2[:n2])
+			//trim the message
+			buf2 = trimMessage(buf2)
+			//decode the message
+			AARQStruct, err := DecodeAAssociateRQ(buf2)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(AARQStruct.ToString())
+
 			conn.Write(buf2[:n2])
 			n3, err := conn.Read(buf3)
 			if err != nil {

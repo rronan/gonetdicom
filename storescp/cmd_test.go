@@ -5,6 +5,6 @@ import (
 )
 
 func TestStoreSCP(t *testing.T) {
-	Storescp()
-	// Echocheat()
+	// Storescp()
+	Echocheat()
 }
