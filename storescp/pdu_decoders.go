@@ -50,10 +50,10 @@ func EncodeAAssociateAC(a Associate) ([]byte, error) {
 	b = append(b, a.variableItems.userInfo.itemType)
 	b = append(b, a.variableItems.userInfo.reserved)
 	b = append(b, a.variableItems.userInfo.length[:]...)
-	b = append(b, a.variableItems.userInfo.subItem.itemType)
-	b = append(b, a.variableItems.userInfo.subItem.reserved)
-	b = append(b, a.variableItems.userInfo.subItem.length[:]...)
-	b = append(b, a.variableItems.userInfo.subItem.maxLength[:]...)
+	b = append(b, a.variableItems.userInfo.userInfoSubItemList[0].itemType)
+	b = append(b, a.variableItems.userInfo.userInfoSubItemList[0].reserved)
+	b = append(b, a.variableItems.userInfo.userInfoSubItemList[0].length[:]...)
+	b = append(b, a.variableItems.userInfo.userInfoSubItemList[0].maxLength[:]...)
 	return b, nil
 }
 
@@ -73,17 +73,25 @@ func decodeUserInfo(b []byte) (UserInfo, int) {
 	u.itemType = b[0]
 	u.reserved = b[1]
 	copy(u.length[:], b[2:4])
-	u.subItem, subItemLenght = decodeSubItem(b[4:])
+	u.userInfoSubItemList, subItemLenght = decodeSubItem(b[4:])
 	return u, 4 + subItemLenght
 }
 
-func decodeSubItem(b []byte) (SubItem, int) {
-	var s SubItem
-	s.itemType = b[0]
-	s.reserved = b[1]
-	copy(s.length[:], b[2:4])
-	copy(s.maxLength[:], b[4:8])
-	return s, 8
+func decodeSubItem(b []byte) ([]UserInfoSubItem, int) {
+	u := make([]UserInfoSubItem, 1)
+	var totalLenght int
+	u[0].itemType = b[0]
+	u[0].reserved = b[1]
+	copy(u[0].length[:], b[2:4])
+	copy(u[0].maxLength[:], b[4:6])
+	totalLenght = 6 + int(binary.BigEndian.Uint16(u[0].length[:]))
+	// recursive call to decode more sub items
+	if totalLenght < len(b) {
+		u2, u2Lenght := decodeSubItem(b[totalLenght:])
+		u = append(u, u2...)
+		totalLenght += u2Lenght
+	}
+	return u, totalLenght
 }
 
 func decodeApplicationContext(b []byte) (ApplicationContext, int) {

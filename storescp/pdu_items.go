@@ -1,6 +1,9 @@
 package storescp
 
-import "fmt"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 type Associate struct {
 	pduType         uint8
@@ -54,17 +57,107 @@ type TransferSyntax struct {
 }
 
 type UserInfo struct {
-	itemType uint8
-	reserved uint8
-	length   [2]byte
-	subItem  SubItem
+	itemType            uint8
+	reserved            uint8
+	length              [2]byte
+	userInfoSubItemList []UserInfoSubItem
 }
 
-type SubItem struct {
+type UserInfoSubItem struct {
 	itemType  uint8
 	reserved  uint8
 	length    [2]byte
 	maxLength [4]byte
+}
+
+func CreateAssociateAC(associateRQ Associate) (Associate, error) {
+
+	ACSubItem := createUserInfoSubItem(16384)
+
+	ACUserInfo := UserInfo{
+		itemType: 0x50,
+		reserved: 0x00,
+		length:   [2]byte{0x00, 0x08},
+		userInfoSubItemList: []UserInfoSubItem{
+			ACSubItem,
+		},
+	}
+	ACTransferSyntax := TransferSyntax{
+		itemType:           0x40,
+		reserved:           0x00,
+		transferSyntaxName: associateRQ.variableItems.presentationContextList[0].transferSyntaxList[0].transferSyntaxName,
+	}
+	binary.BigEndian.PutUint16(ACTransferSyntax.length[:], uint16(len(ACTransferSyntax.transferSyntaxName)))
+	ACTransferSyntaxArray := []TransferSyntax{ACTransferSyntax}
+	ACAbstractSyntax := AbstractSyntax{
+		itemType:           0x30,
+		reserved:           0x00,
+		abstractSyntaxName: associateRQ.variableItems.presentationContextList[0].abstractSyntax.abstractSyntaxName,
+	}
+	binary.BigEndian.PutUint16(ACAbstractSyntax.length[:], uint16(len(ACAbstractSyntax.abstractSyntaxName)))
+	ACPresentationContext := PresentationContext{
+		itemType:              0x21,
+		reserved:              0x00,
+		presentationContextID: associateRQ.variableItems.presentationContextList[0].presentationContextID,
+		reserved2:             0x00,
+		resultReason:          0x00,
+		reserved3:             0x00,
+		transferSyntaxList:    ACTransferSyntaxArray,
+	}
+	binary.BigEndian.PutUint16(ACPresentationContext.length[:], uint16(len(ACTransferSyntax.transferSyntaxName)+8))
+	ACApplicationContext := ApplicationContext{
+		itemType:               0x10,
+		reserved:               0x00,
+		applicationContextName: associateRQ.variableItems.applicationContext.applicationContextName,
+	}
+	binary.BigEndian.PutUint16(ACApplicationContext.length[:], uint16(len(ACApplicationContext.applicationContextName)))
+	ACVariableItems := VariableItems{
+		applicationContext: ACApplicationContext,
+		presentationContextList: []PresentationContext{
+			ACPresentationContext,
+		},
+		userInfo: ACUserInfo,
+	}
+
+	AAACStruct := Associate{
+		pduType:         0x02,
+		reserved:        0x00,
+		protocolVersion: [2]byte{0x00, 0x01},
+		reserved2:       [2]byte{0x00, 0x00},
+		calledAETitle:   associateRQ.calledAETitle,
+		callingAETitle:  associateRQ.callingAETitle,
+		reserved3:       [32]byte{0x00},
+		variableItems:   ACVariableItems,
+	}
+
+	mint := binary.BigEndian.Uint16(ACVariableItems.applicationContext.length[:])
+	mint2 := binary.BigEndian.Uint16(ACVariableItems.presentationContextList[0].length[:])
+	mint3 := binary.BigEndian.Uint16(ACVariableItems.userInfo.length[:])
+
+	binary.BigEndian.PutUint32(AAACStruct.length[:], uint32(mint+mint2+mint3+2+2+16+16+32))
+	fmt.Println(AAACStruct.ToString())
+
+	return AAACStruct, nil
+}
+
+func createUserInfoSubItem(maxLength uint32) UserInfoSubItem {
+	// get max length and convert to byte array
+	var maxLengthBytes [4]byte
+	tmp := make([]byte, 4)
+	binary.BigEndian.PutUint32(tmp, maxLength)
+	copy(maxLengthBytes[:], tmp)
+	fmt.Println("max length bytes: ", maxLengthBytes)
+	fmt.Println("byte max length: ", maxLengthBytes[0], maxLengthBytes[1], maxLengthBytes[2], maxLengthBytes[3])
+	fmt.Println("byte max length: ", [4]byte{0x00, 0x00, 0x40, 0x00})
+
+	fmt.Println("last", binary.BigEndian.Uint32([]byte{0x00, 0x00, 0x40, 0x00}))
+
+	return UserInfoSubItem{
+		itemType:  0x51,
+		reserved:  0x00,
+		length:    [2]byte{0x00, 0x04},
+		maxLength: maxLengthBytes,
+	}
 }
 
 func (a *Associate) ToString() string {
@@ -112,11 +205,13 @@ func (a *Associate) ToString() string {
 	s += fmt.Sprintf("		Item type: %x \n", a.variableItems.userInfo.itemType)
 	s += fmt.Sprintf("		Reserved: %x \n", a.variableItems.userInfo.reserved)
 	s += fmt.Sprintf("		Length: %x \n", a.variableItems.userInfo.length)
-	s += fmt.Sprintf("		Sub item:\n")
-	s += fmt.Sprintf("			Item type: %x \n", a.variableItems.userInfo.subItem.itemType)
-	s += fmt.Sprintf("			Reserved: %x \n", a.variableItems.userInfo.subItem.reserved)
-	s += fmt.Sprintf("			Length: %x \n", a.variableItems.userInfo.subItem.length)
-	s += fmt.Sprintf("			Max length: %x \n", a.variableItems.userInfo.subItem.maxLength)
-
+	s += fmt.Sprintf("		User info sub items:\n")
+	for i := 0; i < len(a.variableItems.userInfo.userInfoSubItemList); i++ {
+		s += fmt.Sprintf("			User info sub item %d:\n", i)
+		s += fmt.Sprintf("				Item type: %x \n", a.variableItems.userInfo.userInfoSubItemList[i].itemType)
+		s += fmt.Sprintf("				Reserved: %x \n", a.variableItems.userInfo.userInfoSubItemList[i].reserved)
+		s += fmt.Sprintf("				Length: %x \n", a.variableItems.userInfo.userInfoSubItemList[i].length)
+		s += fmt.Sprintf("				Max length: %x \n", a.variableItems.userInfo.userInfoSubItemList[i].maxLength)
+	}
 	return s
 }
