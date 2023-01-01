@@ -2,18 +2,18 @@ package dicomweb
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"strings"
 
 	"github.com/rronan/gonetdicom/dicomutil"
 	"github.com/suyashkumar/dicom"
 )
 
-func MakeGetRequest(url string, headers map[string]string) (*http.Response, error) {
+func Get(url string, headers map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return &http.Response{}, err
@@ -27,25 +27,18 @@ func MakeGetRequest(url string, headers map[string]string) (*http.Response, erro
 		return &http.Response{}, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return &http.Response{}, errors.New(fmt.Sprintf("HTTP Status: %d", resp.StatusCode))
+		return &http.Response{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
 	return resp, nil
 }
 
-func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, []byte, error) {
-	if resp.StatusCode != http.StatusOK {
-		return []*dicom.Dataset{}, []byte{}, errors.New(fmt.Sprintf("Status: %d", resp.StatusCode))
-	}
+func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, error) {
 	contentType, params, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 	if err != nil {
-		return []*dicom.Dataset{}, []byte{}, err
+		return []*dicom.Dataset{}, err
 	}
 	if contentType != "multipart/related" {
-		b, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return []*dicom.Dataset{}, []byte{}, err
-		}
-		return []*dicom.Dataset{}, b, nil
+		return []*dicom.Dataset{}, &RequestError{StatusCode: 415, Err: errors.New("Invalid Content-Type:" + contentType)}
 	}
 	multipartReader := multipart.NewReader(resp.Body, params["boundary"])
 	res := []*dicom.Dataset{}
@@ -54,27 +47,31 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, []byte, error) {
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return []*dicom.Dataset{}, []byte{}, err
+			return []*dicom.Dataset{}, err
 		}
 		data, err := ioutil.ReadAll(part)
 		if err != nil {
-			return []*dicom.Dataset{}, []byte{}, err
+			return []*dicom.Dataset{}, err
 		}
 		dcm, err := dicomutil.Bytes2Dicom(data)
-		if err != nil {
-			return []*dicom.Dataset{}, []byte{}, err
+		if err == io.ErrUnexpectedEOF {
+			continue
+		} else if err != nil {
+			return []*dicom.Dataset{}, err
 		}
 		res = append(res, dcm)
 	}
-	return res, []byte{}, nil
+	return res, nil
 }
 
-func GetDicomWeb(url string, headers map[string]string) ([]*dicom.Dataset, []byte, error) {
-	resp, err := MakeGetRequest(url, headers)
+func Wado(url string, headers map[string]string) ([]*dicom.Dataset, *http.Response, error) {
+	resp, err := Get(url, headers)
 	if err != nil {
-		return []*dicom.Dataset{}, []byte{}, err
+		return []*dicom.Dataset{}, resp, err
 	}
-	defer resp.Body.Close()
-	res, b, err := ReadMultipart(resp)
-	return res, b, err
+	if !strings.HasPrefix(resp.Header.Get("Content-Type"), "multipart/related") {
+		return []*dicom.Dataset{}, resp, nil
+	}
+	dcm_slice, err := ReadMultipart(resp)
+	return dcm_slice, resp, err
 }

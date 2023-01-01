@@ -33,31 +33,30 @@ func WriteMultipart(dcm_slice []*dicom.Dataset) (*[]byte, string, error) {
 	return &b, content_type, nil
 }
 
-func PostMultipart(url string, data *[]byte, headers map[string]string) error {
+func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.Response, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewReader(*data))
 	if err != nil {
-		return err
+		return &http.Response{}, err
 	}
 	for key, element := range headers {
 		req.Header.Set(key, element)
 	}
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	r, err := client.Do(req)
 	if err != nil {
-		return err
+		return &http.Response{}, err
 	}
-	if resp.StatusCode != http.StatusOK {
-		return errors.New(fmt.Sprintf("HTTP Status: %d", resp.StatusCode))
+	if r.StatusCode != http.StatusOK {
+		return r, errors.New(fmt.Sprintf("HTTP Status: %d", r.StatusCode))
 	}
-	return nil
+	return r, nil
 }
 
-func Post(url string, dcm_slice []*dicom.Dataset, headers map[string]string) error {
+func Post(url string, dcm_slice []*dicom.Dataset, headers map[string]string) (*http.Response, error) {
 	b, content_type, err := WriteMultipart(dcm_slice)
 	if err != nil {
-		return err
+		return &http.Response{}, err
 	}
 	headers["Content-Type"] = content_type
-	err = PostMultipart(url, b, headers)
-	return err
+	return PostMultipart(url, b, headers)
 }
