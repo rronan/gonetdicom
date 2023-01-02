@@ -4,8 +4,7 @@ import (
 	"encoding/binary"
 )
 
-func DecodeAAssociateRQ(b []byte) (Associate, error) {
-	var a Associate
+func DecodeAAssociateRQ(b []byte) (a Associate, e error) {
 	a.pduType = b[0]
 	a.reserved = b[1]
 	copy(a.length[:], b[2:6])
@@ -57,8 +56,7 @@ func EncodeAAssociateAC(a Associate) ([]byte, error) {
 	return b, nil
 }
 
-func decodeVariableItems(b []byte) (VariableItems, int) {
-	var v VariableItems
+func decodeVariableItems(b []byte) (v VariableItems, lenght int) {
 	var appContextLenght int
 	var presContextLenght int
 	v.applicationContext, appContextLenght = decodeApplicationContext(b)
@@ -67,8 +65,7 @@ func decodeVariableItems(b []byte) (VariableItems, int) {
 	return v, len(b)
 }
 
-func decodeUserInfo(b []byte) (UserInfo, int) {
-	var u UserInfo
+func decodeUserInfo(b []byte) (u UserInfo, lenght int) {
 	var subItemLenght int
 	u.itemType = b[0]
 	u.reserved = b[1]
@@ -77,8 +74,8 @@ func decodeUserInfo(b []byte) (UserInfo, int) {
 	return u, 4 + subItemLenght
 }
 
-func decodeSubItem(b []byte) ([]UserInfoSubItem, int) {
-	u := make([]UserInfoSubItem, 1)
+func decodeSubItem(b []byte) (u []UserInfoSubItem, lenght int) {
+	u = make([]UserInfoSubItem, 1)
 	var totalLenght int
 	u[0].itemType = b[0]
 	u[0].reserved = b[1]
@@ -94,8 +91,7 @@ func decodeSubItem(b []byte) ([]UserInfoSubItem, int) {
 	return u, totalLenght
 }
 
-func decodeApplicationContext(b []byte) (ApplicationContext, int) {
-	var a ApplicationContext
+func decodeApplicationContext(b []byte) (a ApplicationContext, lenght int) {
 	a.itemType = b[0]
 	a.reserved = b[1]
 	copy(a.length[:], b[2:4])
@@ -103,8 +99,8 @@ func decodeApplicationContext(b []byte) (ApplicationContext, int) {
 	return a, 4 + int(binary.BigEndian.Uint16(a.length[:]))
 }
 
-func decodePresentationContext(b []byte) ([]PresentationContext, int) {
-	p := make([]PresentationContext, 1)
+func decodePresentationContext(b []byte) (p []PresentationContext, lenght int) {
+	p = make([]PresentationContext, 1)
 	var abstractSyntaxLenght int
 	var transferSyntaxLenght int
 	var totalLenght int
@@ -130,8 +126,7 @@ func decodePresentationContext(b []byte) ([]PresentationContext, int) {
 	return p, totalLenght
 }
 
-func decodeAbstractSyntax(b []byte) (AbstractSyntax, int) {
-	var a AbstractSyntax
+func decodeAbstractSyntax(b []byte) (a AbstractSyntax, lenght int) {
 	a.itemType = b[0]
 	a.reserved = b[1]
 	copy(a.length[:], b[2:4])
@@ -139,8 +134,8 @@ func decodeAbstractSyntax(b []byte) (AbstractSyntax, int) {
 	return a, 4 + int(binary.BigEndian.Uint16(a.length[:]))
 }
 
-func decodeTransferSyntax(b []byte) ([]TransferSyntax, int) {
-	t := make([]TransferSyntax, 1)
+func decodeTransferSyntax(b []byte) (t []TransferSyntax, lenght int) {
+	t = make([]TransferSyntax, 1)
 	var totalLenght int
 	t[0].itemType = b[0]
 	t[0].reserved = b[1]
