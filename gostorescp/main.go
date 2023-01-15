@@ -1,5 +1,7 @@
 package main
 
+// https://dicom.nema.org/dicom/2013/output/chtml/part08/sect_9.3.html
+
 import (
 	"fmt"
 	"net"
@@ -7,21 +9,21 @@ import (
 )
 
 const (
-	CONN_HOST = "localhost"
-	CONN_PORT = "3333"
-	CONN_TYPE = "tcp"
+	HOST = "localhost"
+	PORT = "3333"
+	TYPE = "tcp"
 )
 
 func main() {
 	// Listen for incoming connections.
-	l, err := net.Listen(CONN_TYPE, CONN_HOST+":"+CONN_PORT)
+	l, err := net.Listen(TYPE, HOST+":"+PORT)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
 	}
 	// Close the listener when the application closes.
 	defer l.Close()
-	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
+	fmt.Println("Listening on " + HOST + ":" + PORT)
 	for {
 		// Listen for an incoming connection.
 		conn, err := l.Accept()
@@ -43,7 +45,10 @@ func handleRequest(conn net.Conn) {
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 	}
-	// Send a response back to person contacting us.
+
+	aAssociateRQ := AAssociateRQ{}
+	aAssociateRQ.Parse(buf)
+
 	conn.Write([]byte("Message received."))
 	// Close the connection when you're done with it.
 	conn.Close()
