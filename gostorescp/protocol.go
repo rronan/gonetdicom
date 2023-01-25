@@ -5,32 +5,141 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"net"
 )
 
-// struct for A-ASSOCIATE-RQ PDU
-type AAssociateRQ struct {
-	ProtocolVersion uint16
-	CalledAETitle   string
-	CallingAETitle  string
-	VariableItems   []byte
+// struct for A-ASSOCIATE-RQ PDU (AARQ)
+type AARQ struct {
+	pduType              uint8
+	reserved1            uint8
+	MaxPDULength         uint32
+	protocolVersion      uint8
+	reserved2            uint8
+	calledAETitle        string
+	callingAETitle       string
+	reserved3            uint8
+	applicationContext   applicationContext
+	presentationContexts []presentationContext
+	userInformation      userInformation
 }
 
-// struct for variable items
-type VariableItems struct {
-	ApplicationContextName string
-	PresentationContexts   []byte
-	UserInformation        []byte
+// struct for A-ASSOCIATE-AC PDU (A-ASSOCIATE-AC)
+type AARE struct {
+	pduType              uint8
+	reserved1            uint8
+	MaxPDULength         uint32
+	protocolVersion      uint8
+	reserved2            uint8
+	calledAETitle        string
+	callingAETitle       string
+	reserved3            uint8
+	applicationContext   applicationContext
+	presentationContexts []presentationContext
+	userInformation      userInformation
 }
 
-// struct for presentation contexts
-type PresentationContexts struct {
-	AbstractSyntax string
-	TransferSyntax string
+// struct for A-ASSOCIATE-RJ PDU (A-ASSOCIATE-RJ)
+type AARJ struct {
+	pduType   uint8
+	reserved1 uint8
+	result    uint8
+	source    uint8
+	reason    uint8
 }
 
-// struct for user information
-type UserInformation struct {
-	MaxPDU uint32
+// struct for P-DATA-TF PDU (P-DATA-TF)
+type PDATA struct {
+	pduType    uint8
+	reserved1  uint8
+	dataValues []presentationDataValue
+}
+
+// struct for A-RELEASE-RQ PDU (A-RELEASE-RQ)
+type RLRQ struct {
+	pduType   uint8
+	reserved1 uint8
+	pduLength uint32
+	reserved2 uint8
+}
+
+// struct for A-RELEASE-RP PDU (A-RELEASE-RP)
+type RLRE struct {
+	pduType   uint8
+	reserved1 uint8
+	pduLength uint32
+	reserved2 uint8
+}
+
+// struct for A-ABORT PDU (A-ABORT)
+type ABRT struct {
+	pduType   uint8
+	reserved1 uint8
+	pduLength uint32
+	reserved2 uint8
+	reserved3 uint8
+	source    uint8
+	reason    uint8
+}
+
+// struct for ApplicationContext
+type applicationContext struct {
+	itemType               uint8
+	reserved1              uint8
+	itemLength             uint8
+	applicationContextName string
+}
+
+// struct for PresentationContext
+type presentationContext struct {
+	itemType              uint8
+	reserved1             uint8
+	itemLength            uint8
+	presentationContextID uint8
+	reserved2             uint8
+	reserved3             uint8
+	reserved4             uint8
+	abstractSyntax        abstractSyntax
+	transferSyntaxes      []transferSyntax
+}
+
+// struct for AbstractSyntax
+type abstractSyntax struct {
+	itemType           uint8
+	reserved1          uint8
+	itemLength         uint8
+	abstractSyntaxName string
+}
+
+// struct for TransferSyntax
+type transferSyntax struct {
+	itemType           uint8
+	reserved1          uint8
+	itemLength         uint8
+	transferSyntaxName string
+}
+
+// struct for UserInformation
+type userInformation struct {
+	itemType      uint8
+	reserved1     uint8
+	itemLength    uint8
+	userDataItems []userDataItem
+}
+
+// struct for UserDataItem
+type userDataItem struct {
+	itemType   uint8
+	reserved1  uint8
+	itemLength uint8
+	data       []byte
+}
+
+// struct for PresentationDataValue
+type presentationDataValue struct {
+	presentationContextID uint8
+	reserved1             uint8
+	presentationDataValue uint8
+	data                  []byte
 }
 
 // parse the DICOM PDU
@@ -45,6 +154,9 @@ func parsePDU(r io.Reader) (err error) {
 	// read the PDU type
 	pduType := pduHeader[0]
 	fmt.Printf("PDU type: %02X	", pduType)
+
+	// read the reserved byte
+	reserved1 := pduHeader[1]
 
 	// read the PDU length
 	pduLength := binary.BigEndian.Uint32(pduHeader[2:])
@@ -82,22 +194,17 @@ func parsePDU(r io.Reader) (err error) {
 
 // parse the A-ASSOCIATE-RQ PDU
 func parseAAssociateRQ(pduBody []byte) (err error) {
-	// initialize the A-ASSOCIATE-RQ struct
-	var aarq AAssociateRQ
 
 	// read the protocol version
 	protocolVersion := binary.BigEndian.Uint16(pduBody[0:])
-	aarq.ProtocolVersion = protocolVersion
 	fmt.Printf("	Protocol version: %04X", protocolVersion)
 
 	// read the called AE title
 	calledAETitle := string(bytes.Trim(pduBody[4:19], "\x20"))
-	aarq.CalledAETitle = calledAETitle
 	fmt.Printf("	Called AE title: %s", calledAETitle)
 
 	// read the calling AE title
 	callingAETitle := string(bytes.Trim(pduBody[20:35], "\x20"))
-	aarq.CallingAETitle = callingAETitle
 	fmt.Printf("	Calling AE title: %s", callingAETitle)
 
 	// parse the variable items
@@ -399,4 +506,56 @@ func parseUserIdentityNegociationSubItem(itemBody []byte) (err error) {
 	fmt.Printf("	Primary field: %s", primaryField)
 
 	return
+}
+
+// generate a A-ASSOCIATE-RJ PDU
+func generateAAssociateRJPDU(connection net.Conn) {
+	// create a buffer to write the PDU into
+	buffer := new(bytes.Buffer)
+
+	// write the PDU type
+	pduType := byte(0x03)
+	binary.Write(buffer, binary.BigEndian, pduType)
+
+	// write the reserved byte
+	reserved := byte(0x00)
+	binary.Write(buffer, binary.BigEndian, reserved)
+
+	// write the length
+	length := uint32(0x00000004)
+	binary.Write(buffer, binary.BigEndian, length)
+
+	// write the result
+	result := uint8(0x01)
+	binary.Write(buffer, binary.BigEndian, result)
+
+	// write the source
+	source := uint8(0x02)
+	binary.Write(buffer, binary.BigEndian, source)
+
+	// write the reason
+	reason := uint8(0x01)
+	binary.Write(buffer, binary.BigEndian, reason)
+
+	// write the PDU to the connection
+	connection.Write(buffer.Bytes())
+
+	return
+}
+
+// create A-ASSOCIATE-AC PDU from A-ASSOCIATE-RQ PDU
+func createAARE(aarq AARQ) AARE {
+	aare := AARE{}
+	aare.pduType = 2
+	aare.reserved1 = 0
+	aare.MaxPDULength = aarq.MaxPDULength
+	aare.protocolVersion = aarq.protocolVersion
+	aare.reserved2 = 0
+	aare.calledAETitle = aarq.calledAETitle
+	aare.callingAETitle = aarq.callingAETitle
+	aare.reserved3 = 0
+	aare.applicationContext = aarq.applicationContext
+	aare.presentationContexts = aarq.presentationContexts
+	aare.userInformation = aarq.userInformation
+	return aare
 }

@@ -40,6 +40,8 @@ func main() {
 func handleRequest(conn net.Conn) {
 	parsePDU(conn)
 
+	// generateAAssociateRJPDU(conn)
+
 	conn.Write([]byte("Message received."))
 	// Close the connection when you're done with it.
 	conn.Close()
