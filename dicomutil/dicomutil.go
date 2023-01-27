@@ -9,7 +9,7 @@ import (
 	"github.com/suyashkumar/dicom/pkg/tag"
 )
 
-func trimTag(s string) string {
+func TrimTag(s string) string {
 	s = strings.TrimPrefix(s, "[")
 	return strings.TrimSuffix(s, "]")
 }
