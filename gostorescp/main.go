@@ -40,6 +40,22 @@ func main() {
 func handleRequest(conn net.Conn) {
 	parsePDU(conn)
 
+	// Make a buffer to hold incoming data.
+	buf := make([]byte, 1024)
+	// Read the incoming connection into the buffer.
+	_, err := conn.Read(buf)
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+	}
+
+	// create AARQ var
+	aarq := AARQ{}
+
+	// parse AARQ
+	aarq = parseAARQ(buf)
+
+	aare := createAARE(aarq)
+
 	// generateAAssociateRJPDU(conn)
 
 	conn.Write([]byte("Message received."))

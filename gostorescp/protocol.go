@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 )
 
 // struct for A-ASSOCIATE-RQ PDU (AARQ)
@@ -156,7 +157,7 @@ func parsePDU(r io.Reader) (err error) {
 	fmt.Printf("PDU type: %02X	", pduType)
 
 	// read the reserved byte
-	reserved1 := pduHeader[1]
+	// reserved1 := pduHeader[1]
 
 	// read the PDU length
 	pduLength := binary.BigEndian.Uint32(pduHeader[2:])
@@ -558,4 +559,148 @@ func createAARE(aarq AARQ) AARE {
 	aare.presentationContexts = aarq.presentationContexts
 	aare.userInformation = aarq.userInformation
 	return aare
+}
+
+// sum length of all presentation contexts
+func sumPresentationContextsLength(presentationContexts []presentationContext) uint8 {
+	var sum uint8
+	for _, presentationContext := range presentationContexts {
+		sum += presentationContext.itemLength
+	}
+	return sum
+}
+
+// sum length of all transfer syntaxes
+func sumTransferSyntaxesLength(transferSyntaxes []transferSyntax) uint8 {
+	var sum uint8
+	for _, transferSyntax := range transferSyntaxes {
+		sum += transferSyntax.itemLength
+	}
+	return sum
+}
+
+// parse A-ASSOCIATE-RQ PDU from byte array check if PDU type is A-ASSOCIATE-RQ
+func parseAARQ(data []byte) AARQ {
+	aarq := AARQ{}
+	aarq.pduType = data[0]
+	if aarq.pduType != 1 {
+		fmt.Println("PDU type is not A-ASSOCIATE-RQ")
+		// exit program
+		os.Exit(1)
+	}
+	aarq.reserved1 = data[1]
+	aarq.MaxPDULength = uint32(data[2])<<24 + uint32(data[3])<<16 + uint32(data[4])<<8 + uint32(data[5])
+	aarq.protocolVersion = uint8(binary.BigEndian.Uint16(data[6:8]))
+	aarq.reserved2 = uint8(binary.BigEndian.Uint16(data[8:9]))
+	aarq.calledAETitle = string(data[10:25])
+	aarq.callingAETitle = string(data[26:41])
+	aarq.reserved3 = uint8(binary.BigEndian.Uint16(data[42:73]))
+	aarq.applicationContext = parseApplicationContext(data[74:])
+	aarq.presentationContexts = parsePresentationContexts(data[74+aarq.applicationContext.itemLength:])
+	aarq.userInformation = parseUserInformation(data[74+aarq.applicationContext.itemLength+sumPresentationContextsLength(aarq.presentationContexts):])
+	return aarq
+}
+
+// parse ApplicationContext from byte array check if item type is ApplicationContext
+func parseApplicationContext(data []byte) applicationContext {
+	applicationContext := applicationContext{}
+	applicationContext.itemType = data[0]
+	if applicationContext.itemType != 10 {
+		fmt.Println("Item type is not ApplicationContext")
+		os.Exit(1)
+	}
+	applicationContext.reserved1 = data[1]
+	applicationContext.itemLength = uint8(binary.BigEndian.Uint16(data[2:3]))
+	applicationContext.applicationContextName = string(data[4:])
+	return applicationContext
+}
+
+// parse PresentationContexts from byte array check if item type is PresentationContext
+func parsePresentationContexts(data []byte) []presentationContext {
+	var presentationContexts []presentationContext
+	for i := 0; i < len(data); {
+		presentationContext := presentationContext{}
+		presentationContext.itemType = data[i]
+		if presentationContext.itemType != 20 {
+			fmt.Println("Item type is not PresentationContext")
+			os.Exit(1)
+		}
+		presentationContext.reserved1 = data[i+1]
+		presentationContext.itemLength = uint8(binary.BigEndian.Uint16(data[i+2 : i+3]))
+		presentationContext.presentationContextID = data[i+4]
+		presentationContext.reserved2 = data[i+5]
+		presentationContext.reserved3 = data[i+6]
+		presentationContext.reserved4 = data[i+7]
+		presentationContext.abstractSyntax = parseAARQAbstractSyntax(data[i+8:])
+		presentationContext.transferSyntaxes = parseTransferSyntaxes(data[i+8+int(presentationContext.abstractSyntax.itemLength):])
+		presentationContexts = append(presentationContexts, presentationContext)
+		i += int(presentationContext.itemLength)
+	}
+	return presentationContexts
+}
+
+// parse AbstractSyntax from byte array check if item type is AbstractSyntax
+func parseAARQAbstractSyntax(data []byte) abstractSyntax {
+	abstractSyntax := abstractSyntax{}
+	abstractSyntax.itemType = data[0]
+	if abstractSyntax.itemType != 30 {
+		fmt.Println("Item type is not AbstractSyntax")
+		os.Exit(1)
+	}
+	abstractSyntax.reserved1 = data[1]
+	abstractSyntax.itemLength = uint8(binary.BigEndian.Uint16(data[2:3]))
+	abstractSyntax.abstractSyntaxName = string(data[4:])
+	return abstractSyntax
+}
+
+// parse TransferSyntaxes from byte array check if item type is TransferSyntax
+func parseTransferSyntaxes(data []byte) []transferSyntax {
+	var transferSyntaxes []transferSyntax
+	for i := 0; i < len(data); {
+		transferSyntax := transferSyntax{}
+		transferSyntax.itemType = data[i]
+		if transferSyntax.itemType != 40 {
+			fmt.Println("Item type is not TransferSyntax")
+			os.Exit(1)
+		}
+		transferSyntax.reserved1 = data[i+1]
+		transferSyntax.itemLength = uint8(binary.BigEndian.Uint16(data[i+2 : i+3]))
+		transferSyntax.transferSyntaxName = string(data[i+4:])
+		transferSyntaxes = append(transferSyntaxes, transferSyntax)
+		i += int(transferSyntax.itemLength)
+	}
+	return transferSyntaxes
+}
+
+// parse UserInformation from byte array check if item type is UserInformation
+func parseUserInformation(data []byte) userInformation {
+	userInformation := userInformation{}
+	userInformation.itemType = data[0]
+	if userInformation.itemType != 50 {
+		fmt.Println("Item type is not UserInformation")
+		os.Exit(1)
+	}
+	userInformation.reserved1 = data[1]
+	userInformation.itemLength = uint8(binary.BigEndian.Uint16(data[2:3]))
+	userInformation.userDataItems = parseUserDataItems(data[4:])
+	return userInformation
+}
+
+// parse UserDataItems from byte array check if item type is UserDataItem
+func parseUserDataItems(data []byte) []userDataItem {
+	var userDataItems []userDataItem
+	for i := 0; i < len(data); {
+		userDataItem := userDataItem{}
+		userDataItem.itemType = data[i]
+		if userDataItem.itemType != 51 {
+			fmt.Println("Item type is not UserDataItem")
+			os.Exit(1)
+		}
+		userDataItem.reserved1 = data[i+1]
+		userDataItem.itemLength = uint8(binary.BigEndian.Uint16(data[i+2 : i+3]))
+		userDataItem.data = data[i+4:]
+		userDataItems = append(userDataItems, userDataItem)
+		i += int(userDataItem.itemLength)
+	}
+	return userDataItems
 }
