@@ -52,7 +52,7 @@ func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.R
 	return r, nil
 }
 
-func Post(url string, dcm_slice []*dicom.Dataset, headers map[string]string) (*http.Response, error) {
+func Stow(url string, dcm_slice []*dicom.Dataset, headers map[string]string) (*http.Response, error) {
 	b, content_type, err := WriteMultipart(dcm_slice)
 	if err != nil {
 		return &http.Response{}, err

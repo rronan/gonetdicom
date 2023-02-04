@@ -25,7 +25,7 @@ func GetUIDs(dataset *dicom.Dataset) (string, string, error) {
 		return "", "", err
 	}
 	study_instance_uid := element.Value.String()
-	return trimTag(study_instance_uid), trimTag(sop_instance_uid), nil
+	return TrimTag(study_instance_uid), TrimTag(sop_instance_uid), nil
 }
 
 func ParseDataset(dcm_path string) (string, string, error) {
