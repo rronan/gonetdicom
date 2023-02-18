@@ -53,3 +53,7 @@ func Test_Bytes2Dicom(t *testing.T) {
 	bytes := Dicom2Bytes(&dcm)
 	_, err = Bytes2Dicom(*bytes)
 }
+
+func Test_RandomDicomName(t *testing.T) {
+	_ = RandomDicomName()
+}

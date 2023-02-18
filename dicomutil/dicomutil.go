@@ -2,6 +2,8 @@ package dicomutil
 
 import (
 	"bytes"
+	"crypto/rand"
+	"fmt"
 	"strings"
 
 	"github.com/suyashkumar/dicom"
@@ -63,3 +65,9 @@ var NULL_PIXEL, _ = dicom.NewElement(tag.PixelData, dicom.PixelDataInfo{
 		},
 	},
 })
+
+func RandomDicomName() string {
+	b := make([]byte, 16)
+	rand.Read(b)
+	return fmt.Sprintf("%x.dcm", b)
+}

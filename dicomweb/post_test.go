@@ -29,3 +29,18 @@ func Test_Stow(t *testing.T) {
 		panic(err)
 	}
 }
+
+func Test_StowFromFile(t *testing.T) {
+	url := getenv("MILVUE_API_URL", "") + "/v3/studies"
+	token := getenv("MILVUE_TOKEN", "")
+	fmt.Println("url:", url, "token:", token)
+	headers := map[string]string{"x-goog-meta-owner": token, "Content-Type": "multipart/related; type=application/dicom"}
+	var DICOM_PATH_SLICE = []string{
+		"../data/study/1.2.276.0.7230010.3.1.4.0.78767.1672226121.633599.dcm",
+		"../data/study/1.2.276.0.7230010.3.1.4.0.78767.1672226121.633601.dcm",
+	}
+	_, err := StowFromFile(url, DICOM_PATH_SLICE, headers)
+	if err != nil {
+		panic(err)
+	}
+}
