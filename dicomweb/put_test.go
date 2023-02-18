@@ -18,3 +18,12 @@ func Test_Put(t *testing.T) {
 		panic(err)
 	}
 }
+
+func Test_PutFromFile(t *testing.T) {
+	url := "http://localhost:8000/foo.dcm"
+	DICOM_PATH := "../data/study/1.2.276.0.7230010.3.1.4.0.78767.1672226121.633599.dcm"
+	err := PutFromFile(url, DICOM_PATH, map[string]string{})
+	if err != nil {
+		panic(err)
+	}
+}
