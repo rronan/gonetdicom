@@ -16,24 +16,29 @@ func TrimTag(s string) string {
 	return strings.TrimSuffix(s, "]")
 }
 
-func GetUIDs(dataset *dicom.Dataset) (string, string, error) {
+func GetUIDs(dataset *dicom.Dataset) (string, string, string, error) {
 	element, err := dataset.FindElementByTag(tag.SOPInstanceUID)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	sop_instance_uid := element.Value.String()
+	element, err = dataset.FindElementByTag(tag.SeriesInstanceUID)
+	if err != nil {
+		return "", "", "", err
+	}
+	series_instance_uid := element.Value.String()
 	element, err = dataset.FindElementByTag(tag.StudyInstanceUID)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	study_instance_uid := element.Value.String()
-	return TrimTag(study_instance_uid), TrimTag(sop_instance_uid), nil
+	return TrimTag(study_instance_uid), TrimTag(series_instance_uid), TrimTag(sop_instance_uid), nil
 }
 
-func ParseDataset(dcm_path string) (string, string, error) {
-	dataset, err := dicom.ParseFile(dcm_path, nil)
+func ParseFileUIDs(dcm_path string) (string, string, string, error) {
+	dataset, err := dicom.ParseFile(dcm_path, nil, dicom.SkipPixelData())
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	return GetUIDs(&dataset)
 }

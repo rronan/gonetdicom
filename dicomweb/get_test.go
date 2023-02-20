@@ -19,12 +19,11 @@ func Test_Wado(t *testing.T) {
 		panic(err)
 	}
 	for _, dcm := range dcm_slice {
-		study_instance_uid, sop_instance_uid, err := dicomutil.GetUIDs(dcm)
+		study_instance_uid, series_instance_uid, sop_instance_uid, err := dicomutil.GetUIDs(dcm)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(study_instance_uid)
-		fmt.Println(sop_instance_uid)
+		fmt.Printf("%s/%s/%s\n", study_instance_uid, series_instance_uid, sop_instance_uid)
 	}
 }
 
@@ -47,10 +46,10 @@ func Test_WadoToFile(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		study_instance_uid, sop_instance_uid, err := dicomutil.GetUIDs(&dcm)
+		study_instance_uid, series_instance_uid, sop_instance_uid, err := dicomutil.GetUIDs(&dcm)
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("%s,%s\n", study_instance_uid, sop_instance_uid)
+		fmt.Printf("%s/%s/%s\n", study_instance_uid, series_instance_uid, sop_instance_uid)
 	}
 }
