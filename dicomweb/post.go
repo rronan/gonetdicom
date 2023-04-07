@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"os"
 
 	"github.com/suyashkumar/dicom"
 )
@@ -54,6 +56,43 @@ func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.R
 
 func Stow(url string, dcm_slice []*dicom.Dataset, headers map[string]string) (*http.Response, error) {
 	b, content_type, err := WriteMultipart(dcm_slice)
+	if err != nil {
+		return &http.Response{}, err
+	}
+	headers["Content-Type"] = content_type
+	return PostMultipart(url, b, headers)
+}
+
+func WriteMultipartFromFile(dcm_path_slice []string) (*[]byte, string, error) {
+	var buf bytes.Buffer
+	writer := multipart.NewWriter(&buf)
+	for _, dcm_path := range dcm_path_slice {
+
+		data, err := os.Open(dcm_path)
+		if err != nil {
+			return &[]byte{}, "", err
+		}
+		defer data.Close()
+
+		part, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": {"application/dicom"}})
+		if err != nil {
+			return &[]byte{}, "", err
+		}
+		_, err = io.Copy(part, data)
+		if err != nil {
+			return &[]byte{}, "", err
+		}
+	}
+	params := make(map[string]string)
+	params["boundary"] = writer.Boundary()
+	params["type"] = "application/dicom"
+	content_type := mime.FormatMediaType("multipart/related", params)
+	b := buf.Bytes()
+	return &b, content_type, nil
+}
+
+func StowFromFile(url string, dcm_path_slice []string, headers map[string]string) (*http.Response, error) {
+	b, content_type, err := WriteMultipartFromFile(dcm_path_slice)
 	if err != nil {
 		return &http.Response{}, err
 	}

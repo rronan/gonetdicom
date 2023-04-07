@@ -22,19 +22,19 @@ func Test_GetUIDs(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	sop_instance_uid, study_instance_uid, err := GetUIDs(&dcm)
+	study_instance_uid, series_instance_uid, sop_instance_uid, err := GetUIDs(&dcm)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(sop_instance_uid, study_instance_uid)
+	fmt.Println(study_instance_uid, series_instance_uid, sop_instance_uid)
 }
 
-func Test_ParseDataset(t *testing.T) {
-	sop_instance_uid, study_instance_uid, err := ParseDataset(DICOM_PATH)
+func Test_ParseFileUIDs(t *testing.T) {
+	study_instance_uid, series_instance_uid, sop_instance_uid, err := ParseFileUIDs(DICOM_PATH)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(sop_instance_uid, study_instance_uid)
+	fmt.Println(study_instance_uid, series_instance_uid, sop_instance_uid)
 }
 
 func Test_Dicom2Bytes(t *testing.T) {
@@ -52,4 +52,8 @@ func Test_Bytes2Dicom(t *testing.T) {
 	}
 	bytes := Dicom2Bytes(&dcm)
 	_, err = Bytes2Dicom(*bytes)
+}
+
+func Test_RandomDicomName(t *testing.T) {
+	_ = RandomDicomName()
 }
