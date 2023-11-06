@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -54,7 +53,7 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, error) {
 		if part.Header.Get("Content-type") != "application/dicom" {
 			break
 		}
-		data, err := ioutil.ReadAll(part)
+		data, err := io.ReadAll(part)
 		if err != nil {
 			return []*dicom.Dataset{}, err
 		}
@@ -116,8 +115,9 @@ func WadoToFile(url string, headers map[string]string, folder string) ([]string,
 	if err != nil {
 		return []string{}, resp, err
 	}
-	if !strings.HasPrefix(resp.Header.Get("Content-Type"), "multipart/related") {
-		return []string{}, resp, nil
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "multipart/related") {
+		return []string{}, resp, errors.New(fmt.Sprintf("Content-Type is not 'multipart/related' (%s)", contentType))
 	}
 	dcm_path_list, err := ReadMultipartToFile(resp, folder)
 	return dcm_path_list, resp, err

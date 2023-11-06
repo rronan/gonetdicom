@@ -55,6 +55,7 @@ func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.R
 }
 
 func Stow(url string, dcm_slice []*dicom.Dataset, headers map[string]string) (*http.Response, error) {
+	fmt.Print("IN STOW")
 	b, content_type, err := WriteMultipart(dcm_slice)
 	if err != nil {
 		return &http.Response{}, err
@@ -92,6 +93,7 @@ func WriteMultipartFromFile(dcm_path_slice []string) (*[]byte, string, error) {
 }
 
 func StowFromFile(url string, dcm_path_slice []string, headers map[string]string) (*http.Response, error) {
+	fmt.Print("IN STOW FROM FILE")
 	b, content_type, err := WriteMultipartFromFile(dcm_path_slice)
 	if err != nil {
 		return &http.Response{}, err

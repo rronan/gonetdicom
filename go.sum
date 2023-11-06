@@ -4,6 +4,8 @@ github.com/suyashkumar/dicom v1.0.5 h1:2b2pdEhGoKrHYHTQjNBXGsRbv8Py5AX/9QNPJJqiI
 github.com/suyashkumar/dicom v1.0.5/go.mod h1:bXhNY97UnGkBWqXSbSeMgdTv70LIwoOhZJDEGzswIUQ=
 github.com/suyashkumar/dicom v1.0.6-0.20230220030505-954baa99570f h1:wT5CPirelsK91fSrTdyfUB4yB0gP2bcjjHyCIMJkY2o=
 github.com/suyashkumar/dicom v1.0.6-0.20230220030505-954baa99570f/go.mod h1:JauoxyEF8IFMg8zPt0lq6datsA9A4a2MjpLULSP1DNI=
+github.com/suyashkumar/dicom v1.0.6 h1:tTx26lwobDD88KmNQxGENRehkLopgTRJmdHe2wEtOmA=
+github.com/suyashkumar/dicom v1.0.6/go.mod h1:3Ei+G2Lf6Ro87C8iqrnBL075LcNeTF41y7fqQQgiOf8=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/net v0.0.0-20190311183353-d8887717615a/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
