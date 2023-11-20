@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/labstack/gommon/log"
 	"github.com/rronan/gonetdicom/dicomutil"
 	"github.com/suyashkumar/dicom"
 )
@@ -51,7 +52,16 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, error) {
 			return []*dicom.Dataset{}, err
 		}
 		if part.Header.Get("Content-type") != "application/dicom" {
-			break
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return []*dicom.Dataset{}, err
+			}
+			msg := fmt.Sprintf(
+				"ReadMultipartToFile() received unknown Content-type: %s\n %s\n passing...",
+				part.Header.Get("Content-type"),
+				string(data),
+			)
+			log.Warn(msg)
 		}
 		data, err := io.ReadAll(part)
 		if err != nil {
@@ -96,7 +106,16 @@ func ReadMultipartToFile(resp *http.Response, folder string) ([]string, error) {
 			return res, err
 		}
 		if part.Header.Get("Content-type") != "application/dicom" {
-			break
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return []string{}, err
+			}
+			msg := fmt.Sprintf(
+				"ReadMultipartToFile() received unknown Content-type: %s\n %s\n passing...",
+				part.Header.Get("Content-type"),
+				string(data),
+			)
+			log.Warn(msg)
 		}
 		dcm_path := fmt.Sprintf("%s/%s", folder, dicomutil.RandomDicomName())
 		f, err := os.Create(dcm_path)
