@@ -52,7 +52,7 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, error) {
 			return []*dicom.Dataset{}, err
 		}
 		if part.Header.Get("Content-type") != "application/dicom" {
-			data, err := io.ReadAll(resp.Body)
+			data, err := io.ReadAll(part)
 			if err != nil {
 				return []*dicom.Dataset{}, err
 			}
@@ -106,7 +106,7 @@ func ReadMultipartToFile(resp *http.Response, folder string) ([]string, error) {
 			return res, err
 		}
 		if part.Header.Get("Content-type") != "application/dicom" {
-			data, err := io.ReadAll(resp.Body)
+			data, err := io.ReadAll(part)
 			if err != nil {
 				return []string{}, err
 			}
