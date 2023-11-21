@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/labstack/gommon/log"
 	"github.com/rronan/gonetdicom/dicomutil"
 	"github.com/suyashkumar/dicom"
 )
@@ -34,110 +33,112 @@ func Get(url string, headers map[string]string) (*http.Response, error) {
 	return resp, nil
 }
 
-func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, error) {
-	contentType, params, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, []byte, error) {
+	res := []*dicom.Dataset{}
+	_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 	if err != nil {
-		return []*dicom.Dataset{}, err
-	}
-	if contentType != "multipart/related" {
-		return []*dicom.Dataset{}, &RequestError{StatusCode: 415, Err: errors.New("Invalid Content-Type:" + contentType)}
+		return res, []byte{}, err
 	}
 	multipartReader := multipart.NewReader(resp.Body, params["boundary"])
-	res := []*dicom.Dataset{}
 	for {
 		part, err := multipartReader.NextPart()
 		if err == io.EOF {
 			break
-		} else if err != nil {
-			return []*dicom.Dataset{}, err
 		}
-		if part.Header.Get("Content-type") != "application/dicom" {
-			data, err := io.ReadAll(part)
-			if err != nil {
-				return []*dicom.Dataset{}, err
-			}
-			msg := fmt.Sprintf(
-				"ReadMultipartToFile() received unknown Content-type: %s\n %s\n passing...",
-				part.Header.Get("Content-type"),
-				string(data),
-			)
-			log.Warn(msg)
+		if err != nil {
+			return res, []byte{}, err
 		}
 		data, err := io.ReadAll(part)
 		if err != nil {
-			return []*dicom.Dataset{}, err
+			return res, []byte{}, err
+		}
+		contentType := part.Header.Get("Content-type")
+		if contentType == "application/json" {
+			return res, data, err
+		}
+		if contentType != "application/dicom" {
+			return res, []byte{}, &RequestError{StatusCode: 415, Err: errors.New("Invalid Content-Type:" + contentType)}
 		}
 		dcm, err := dicomutil.Bytes2Dicom(data)
 		if err != nil {
-			return []*dicom.Dataset{}, err
+			return res, []byte{}, err
 		}
 		res = append(res, dcm)
 	}
-	return res, nil
+	return res, []byte{}, nil
 }
 
-func Wado(url string, headers map[string]string) ([]*dicom.Dataset, *http.Response, error) {
+func Wado(url string, headers map[string]string) ([]*dicom.Dataset, []byte, error) {
 	resp, err := Get(url, headers)
 	if err != nil {
-		return []*dicom.Dataset{}, resp, err
+		return []*dicom.Dataset{}, []byte{}, err
 	}
-	if !strings.HasPrefix(resp.Header.Get("Content-Type"), "multipart/related") {
-		return []*dicom.Dataset{}, resp, nil
+	if resp.StatusCode >= 400 {
+		return []*dicom.Dataset{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
-	dcm_slice, err := ReadMultipart(resp)
-	return dcm_slice, resp, err
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "application/json" {
+		data, err := io.ReadAll(resp.Body)
+		return []*dicom.Dataset{}, data, err
+	}
+	if !strings.HasPrefix(contentType, "multipart/related") {
+		return []*dicom.Dataset{}, []byte{}, &RequestError{StatusCode: 415, Err: errors.New("Invalid Content-Type:" + contentType)}
+	}
+	dcm_slice, byte_slice, err := ReadMultipart(resp)
+	return dcm_slice, byte_slice, err
 }
 
-func ReadMultipartToFile(resp *http.Response, folder string) ([]string, error) {
+func ReadMultipartToFile(resp *http.Response, folder string) ([]string, []byte, error) {
 	res := []string{}
-	contentType, params, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+	_, params, err := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 	if err != nil {
-		return res, err
-	}
-	if contentType != "multipart/related" {
-		return res, &RequestError{StatusCode: 415, Err: errors.New("Invalid Content-Type:" + contentType)}
+		return res, []byte{}, err
 	}
 	multipartReader := multipart.NewReader(resp.Body, params["boundary"])
 	for {
 		part, err := multipartReader.NextPart()
 		if err == io.EOF {
 			break
-		} else if err != nil {
-			return res, err
 		}
-		if part.Header.Get("Content-type") != "application/dicom" {
+		if err != nil {
+			return res, []byte{}, err
+		}
+		contentType := part.Header.Get("Content-type")
+		if contentType == "application/json" {
 			data, err := io.ReadAll(part)
-			if err != nil {
-				return []string{}, err
-			}
-			msg := fmt.Sprintf(
-				"ReadMultipartToFile() received unknown Content-type: %s\n %s\n passing...",
-				part.Header.Get("Content-type"),
-				string(data),
-			)
-			log.Warn(msg)
+			return res, data, err
+		}
+		if contentType != "application/dicom" {
+			return res, []byte{}, &RequestError{StatusCode: 415, Err: errors.New("Invalid Content-Type:" + contentType)}
 		}
 		dcm_path := fmt.Sprintf("%s/%s", folder, dicomutil.RandomDicomName())
 		f, err := os.Create(dcm_path)
 		if err != nil {
-			return res, err
+			return res, []byte{}, err
 		}
 		defer f.Close()
 		io.Copy(f, part)
 		res = append(res, dcm_path)
 	}
-	return res, nil
+	return res, []byte{}, nil
 }
 
-func WadoToFile(url string, headers map[string]string, folder string) ([]string, *http.Response, error) {
+func WadoToFile(url string, headers map[string]string, folder string) ([]string, []byte, error) {
 	resp, err := Get(url, headers)
 	if err != nil {
-		return []string{}, resp, err
+		return []string{}, []byte{}, err
+	}
+	if resp.StatusCode >= 400 {
+		return []string{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
 	contentType := resp.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "multipart/related") {
-		return []string{}, resp, errors.New(fmt.Sprintf("Content-Type is not 'multipart/related' (%s)", contentType))
+	if contentType == "application/json" {
+		data, err := io.ReadAll(resp.Body)
+		return []string{}, data, err
 	}
-	dcm_path_list, err := ReadMultipartToFile(resp, folder)
-	return dcm_path_list, resp, err
+	if !strings.HasPrefix(contentType, "multipart/related") {
+		return []string{}, []byte{}, &RequestError{StatusCode: 415, Err: errors.New("Invalid Content-Type:" + contentType)}
+	}
+	dcm_path_slice, byte_slice, err := ReadMultipartToFile(resp, folder)
+	return dcm_path_slice, byte_slice, err
 }
