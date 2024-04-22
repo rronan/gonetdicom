@@ -128,6 +128,7 @@ func WadoToFile(url string, headers map[string]string, folder string) ([]string,
 	if err != nil {
 		return []string{}, []byte{}, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		return []string{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
