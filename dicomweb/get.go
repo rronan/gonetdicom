@@ -73,6 +73,7 @@ func Wado(url string, headers map[string]string) ([]*dicom.Dataset, []byte, erro
 	if err != nil {
 		return []*dicom.Dataset{}, []byte{}, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		return []*dicom.Dataset{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
