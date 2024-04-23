@@ -48,6 +48,7 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, []byte, error) {
 		if err != nil {
 			return res, []byte{}, err
 		}
+		defer part.Close()
 		data, err := io.ReadAll(part)
 		if err != nil {
 			return res, []byte{}, err
@@ -104,6 +105,7 @@ func ReadMultipartToFile(resp *http.Response, folder string) ([]string, []byte, 
 		if err != nil {
 			return res, []byte{}, err
 		}
+		defer part.Close()
 		contentType := part.Header.Get("Content-type")
 		if contentType == "application/json" {
 			data, err := io.ReadAll(part)
