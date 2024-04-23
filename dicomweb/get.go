@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -128,15 +127,11 @@ func ReadMultipartToFile(resp *http.Response, folder string) ([]string, []byte, 
 }
 
 func WadoToFile(url string, headers map[string]string, folder string) ([]string, []byte, error) {
-	log.Println("THIS IS A TEST CW") // To remove
 	resp, err := Get(url, headers)
 	if err != nil {
 		return []string{}, []byte{}, err
 	}
 	defer resp.Body.Close()
-	// if resp.StatusCode >= 400 {
-	// 	return []string{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
-	// }
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "application/json" {
 		data, err := io.ReadAll(resp.Body)
