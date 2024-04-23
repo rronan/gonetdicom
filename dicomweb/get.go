@@ -48,6 +48,7 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, []byte, error) {
 		if err != nil {
 			return res, []byte{}, err
 		}
+		defer part.Close()
 		data, err := io.ReadAll(part)
 		if err != nil {
 			return res, []byte{}, err
@@ -73,6 +74,7 @@ func Wado(url string, headers map[string]string) ([]*dicom.Dataset, []byte, erro
 	if err != nil {
 		return []*dicom.Dataset{}, []byte{}, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
 		return []*dicom.Dataset{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
@@ -103,6 +105,7 @@ func ReadMultipartToFile(resp *http.Response, folder string) ([]string, []byte, 
 		if err != nil {
 			return res, []byte{}, err
 		}
+		defer part.Close()
 		contentType := part.Header.Get("Content-type")
 		if contentType == "application/json" {
 			data, err := io.ReadAll(part)
@@ -128,9 +131,7 @@ func WadoToFile(url string, headers map[string]string, folder string) ([]string,
 	if err != nil {
 		return []string{}, []byte{}, err
 	}
-	if resp.StatusCode >= 400 {
-		return []string{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
-	}
+	defer resp.Body.Close()
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "application/json" {
 		data, err := io.ReadAll(resp.Body)
