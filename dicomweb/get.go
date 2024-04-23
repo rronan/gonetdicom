@@ -134,9 +134,9 @@ func WadoToFile(url string, headers map[string]string, folder string) ([]string,
 		return []string{}, []byte{}, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode >= 400 {
-		return []string{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
-	}
+	// if resp.StatusCode >= 400 {
+	// 	return []string{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
+	// }
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "application/json" {
 		data, err := io.ReadAll(resp.Body)

@@ -26,10 +26,11 @@ func Test_Stow(t *testing.T) {
 		}
 		dcm_slice = append(dcm_slice, &dcm)
 	}
-	_, err := Stow(url, dcm_slice, headers)
+	resp, err := Stow(url, dcm_slice, headers)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer resp.Body.Close()
 }
 
 func Test_StowFromFile(t *testing.T) {
@@ -40,8 +41,9 @@ func Test_StowFromFile(t *testing.T) {
 		"../data/study/1.2.276.0.7230010.3.1.4.0.78767.1672226121.633599.dcm",
 		"../data/study/1.2.276.0.7230010.3.1.4.0.78767.1672226121.633601.dcm",
 	}
-	_, err := StowFromFile(url, DICOM_PATH_SLICE, headers)
+	resp, err := StowFromFile(url, DICOM_PATH_SLICE, headers)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer resp.Body.Close()
 }
