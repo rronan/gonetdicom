@@ -9,12 +9,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rronan/gonetdicom/dicomutil"
 	"github.com/suyashkumar/dicom"
 )
 
-func Get(url string, headers map[string]string) (*http.Response, error) {
+func Get(url string, headers map[string]string, client_timeout int) (*http.Response, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return &http.Response{}, err
@@ -22,7 +23,7 @@ func Get(url string, headers map[string]string) (*http.Response, error) {
 	for key, element := range headers {
 		req.Header.Set(key, element)
 	}
-	client := &http.Client{}
+	client := &http.Client{Timeout: time.Duration(client_timeout * 1e9)}
 	resp, err := client.Do(req)
 	if err != nil {
 		return &http.Response{}, err
@@ -69,8 +70,8 @@ func ReadMultipart(resp *http.Response) ([]*dicom.Dataset, []byte, error) {
 	return res, []byte{}, nil
 }
 
-func Wado(url string, headers map[string]string) ([]*dicom.Dataset, []byte, error) {
-	resp, err := Get(url, headers)
+func Wado(url string, headers map[string]string, client_timeout int) ([]*dicom.Dataset, []byte, error) {
+	resp, err := Get(url, headers, client_timeout)
 	if err != nil {
 		return []*dicom.Dataset{}, []byte{}, err
 	}
@@ -126,8 +127,8 @@ func ReadMultipartToFile(resp *http.Response, folder string) ([]string, []byte, 
 	return res, []byte{}, nil
 }
 
-func WadoToFile(url string, headers map[string]string, folder string) ([]string, []byte, error) {
-	resp, err := Get(url, headers)
+func WadoToFile(url string, headers map[string]string, folder string, client_timeout int) ([]string, []byte, error) {
+	resp, err := Get(url, headers, client_timeout)
 	if err != nil {
 		return []string{}, []byte{}, err
 	}

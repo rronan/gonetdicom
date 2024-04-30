@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/textproto"
 	"os"
+	"time"
 
 	"github.com/suyashkumar/dicom"
 )
@@ -35,7 +36,7 @@ func WriteMultipart(dcm_slice []*dicom.Dataset) (*[]byte, string, error) {
 	return &b, content_type, nil
 }
 
-func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.Response, error) {
+func PostMultipart(url string, data *[]byte, headers map[string]string, client_timeout int) (*http.Response, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewReader(*data))
 	if err != nil {
 		return &http.Response{}, err
@@ -43,7 +44,7 @@ func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.R
 	for key, element := range headers {
 		req.Header.Set(key, element)
 	}
-	client := &http.Client{}
+	client := &http.Client{Timeout: time.Duration(client_timeout * 1e9)}
 	r, err := client.Do(req)
 	if err != nil {
 		return &http.Response{}, err
@@ -54,13 +55,13 @@ func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.R
 	return r, nil
 }
 
-func Stow(url string, dcm_slice []*dicom.Dataset, headers map[string]string) (*http.Response, error) {
+func Stow(url string, dcm_slice []*dicom.Dataset, headers map[string]string, client_timeout int) (*http.Response, error) {
 	b, content_type, err := WriteMultipart(dcm_slice)
 	if err != nil {
 		return &http.Response{}, err
 	}
 	headers["Content-Type"] = content_type
-	return PostMultipart(url, b, headers)
+	return PostMultipart(url, b, headers, client_timeout)
 }
 
 func WriteMultipartFromFile(dcm_path_slice []string) (*[]byte, string, error) {
@@ -91,11 +92,11 @@ func WriteMultipartFromFile(dcm_path_slice []string) (*[]byte, string, error) {
 	return &b, content_type, nil
 }
 
-func StowFromFile(url string, dcm_path_slice []string, headers map[string]string) (*http.Response, error) {
+func StowFromFile(url string, dcm_path_slice []string, headers map[string]string, client_timeout int) (*http.Response, error) {
 	b, content_type, err := WriteMultipartFromFile(dcm_path_slice)
 	if err != nil {
 		return &http.Response{}, err
 	}
 	headers["Content-Type"] = content_type
-	return PostMultipart(url, b, headers)
+	return PostMultipart(url, b, headers, client_timeout)
 }
