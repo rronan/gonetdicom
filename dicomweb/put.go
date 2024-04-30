@@ -11,7 +11,7 @@ import (
 	"github.com/suyashkumar/dicom"
 )
 
-func Put(url string, dcm *dicom.Dataset, headers map[string]string, client_timeout int) error {
+func Put(url string, dcm *dicom.Dataset, headers map[string]string, timeout int) error {
 	data := dicomutil.Dicom2Bytes(dcm)
 	req, err := http.NewRequest("PUT", url, bytes.NewReader(*data))
 	if err != nil {
@@ -20,7 +20,7 @@ func Put(url string, dcm *dicom.Dataset, headers map[string]string, client_timeo
 	for key, element := range headers {
 		req.Header.Set(key, element)
 	}
-	client := &http.Client{Timeout: time.Duration(client_timeout * 1e9)}
+	client := &http.Client{Timeout: time.Duration(timeout * 1e9)}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -32,7 +32,7 @@ func Put(url string, dcm *dicom.Dataset, headers map[string]string, client_timeo
 	return nil
 }
 
-func PutFromFile(url string, dcm_path string, headers map[string]string, client_timeout int) error {
+func PutFromFile(url string, dcm_path string, headers map[string]string, timeout int) error {
 	data, err := os.Open(dcm_path)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func PutFromFile(url string, dcm_path string, headers map[string]string, client_
 		return err
 	}
 	req.ContentLength = stat.Size()
-	client := &http.Client{Timeout: time.Duration(client_timeout * 1e9)}
+	client := &http.Client{Timeout: time.Duration(timeout * 1e9)}
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
