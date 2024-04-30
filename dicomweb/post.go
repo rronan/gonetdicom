@@ -3,7 +3,6 @@ package dicomweb
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -45,14 +44,15 @@ func PostMultipart(url string, data *[]byte, headers map[string]string, client_t
 		req.Header.Set(key, element)
 	}
 	client := &http.Client{Timeout: time.Duration(client_timeout * 1e9)}
-	r, err := client.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return &http.Response{}, err
 	}
-	if r.StatusCode != http.StatusOK {
-		return r, errors.New(fmt.Sprintf("HTTP Status: %d", r.StatusCode))
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		return &http.Response{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
-	return r, nil
+	return resp, nil
 }
 
 func Stow(url string, dcm_slice []*dicom.Dataset, headers map[string]string, client_timeout int) (*http.Response, error) {

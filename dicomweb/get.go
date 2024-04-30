@@ -29,6 +29,7 @@ func Get(url string, headers map[string]string, client_timeout int) (*http.Respo
 		return &http.Response{}, err
 	}
 	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
 		return &http.Response{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
 	return resp, nil
@@ -76,9 +77,6 @@ func Wado(url string, headers map[string]string, client_timeout int) ([]*dicom.D
 		return []*dicom.Dataset{}, []byte{}, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode >= 400 {
-		return []*dicom.Dataset{}, []byte{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
-	}
 	contentType := resp.Header.Get("Content-Type")
 	if contentType == "application/json" {
 		data, err := io.ReadAll(resp.Body)

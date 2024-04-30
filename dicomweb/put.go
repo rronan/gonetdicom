@@ -3,7 +3,6 @@ package dicomweb
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -28,9 +27,9 @@ func Put(url string, dcm *dicom.Dataset, headers map[string]string, client_timeo
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return errors.New(fmt.Sprintf("Status: %d", resp.StatusCode))
+		return &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
-	return err
+	return nil
 }
 
 func PutFromFile(url string, dcm_path string, headers map[string]string, client_timeout int) error {
@@ -58,7 +57,7 @@ func PutFromFile(url string, dcm_path string, headers map[string]string, client_
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return errors.New(fmt.Sprintf("Status: %d", resp.StatusCode))
+		return &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
-	return err
+	return nil
 }
