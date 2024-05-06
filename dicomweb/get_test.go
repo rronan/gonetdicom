@@ -13,7 +13,7 @@ func Test_Wado(t *testing.T) {
 	url := getenv("MILVUE_API_URL", "") + "/v3/studies/1.2.826.0.1.3680044.0.0.0.20221228121333.16387?inference_command=smarturgences&?signed_url=false"
 	token := getenv("MILVUE_TOKEN", "")
 	headers := map[string]string{"x-goog-meta-owner": token, "Content-Type": "multipart/related; type=application/dicom"}
-	dcm_slice, _, err := Wado(url, headers)
+	dcm_slice, _, err := Wado(url, headers, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func Test_WadoToFile(t *testing.T) {
 	url := getenv("MILVUE_API_URL", "") + "/v3/studies/1.2.826.0.1.3680044.0.0.0.20221228121333.16387?inference_command=smarturgences&signed_urls=false"
 	token := getenv("MILVUE_TOKEN", "")
 	headers := map[string]string{"x-goog-meta-owner": token, "Content-Type": "multipart/related; type=application/dicom"}
-	dcm_path_slice, _, err := WadoToFile(url, headers, "../data/outdir")
+	dcm_path_slice, _, err := WadoToFile(url, headers, "../data/outdir", 0)
 	if err != nil {
 		t.Fatal(err)
 	}

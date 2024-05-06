@@ -3,13 +3,13 @@ package dicomweb
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
 	"os"
+	"time"
 
 	"github.com/suyashkumar/dicom"
 )
@@ -35,7 +35,7 @@ func WriteMultipart(dcm_slice []*dicom.Dataset) (*[]byte, string, error) {
 	return &b, content_type, nil
 }
 
-func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.Response, error) {
+func PostMultipart(url string, data *[]byte, headers map[string]string, timeout int) (*http.Response, error) {
 	req, err := http.NewRequest("POST", url, bytes.NewReader(*data))
 	if err != nil {
 		return &http.Response{}, err
@@ -43,24 +43,25 @@ func PostMultipart(url string, data *[]byte, headers map[string]string) (*http.R
 	for key, element := range headers {
 		req.Header.Set(key, element)
 	}
-	client := &http.Client{}
-	r, err := client.Do(req)
+	client := &http.Client{Timeout: time.Duration(timeout * 1e9)}
+	resp, err := client.Do(req)
 	if err != nil {
 		return &http.Response{}, err
 	}
-	if r.StatusCode != http.StatusOK {
-		return r, errors.New(fmt.Sprintf("HTTP Status: %d", r.StatusCode))
+	if resp.StatusCode != http.StatusOK {
+		defer resp.Body.Close()
+		return &http.Response{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
-	return r, nil
+	return resp, nil
 }
 
-func Stow(url string, dcm_slice []*dicom.Dataset, headers map[string]string) (*http.Response, error) {
+func Stow(url string, dcm_slice []*dicom.Dataset, headers map[string]string, timeout int) (*http.Response, error) {
 	b, content_type, err := WriteMultipart(dcm_slice)
 	if err != nil {
 		return &http.Response{}, err
 	}
 	headers["Content-Type"] = content_type
-	return PostMultipart(url, b, headers)
+	return PostMultipart(url, b, headers, timeout)
 }
 
 func WriteMultipartFromFile(dcm_path_slice []string) (*[]byte, string, error) {
@@ -91,11 +92,11 @@ func WriteMultipartFromFile(dcm_path_slice []string) (*[]byte, string, error) {
 	return &b, content_type, nil
 }
 
-func StowFromFile(url string, dcm_path_slice []string, headers map[string]string) (*http.Response, error) {
+func StowFromFile(url string, dcm_path_slice []string, headers map[string]string, timeout int) (*http.Response, error) {
 	b, content_type, err := WriteMultipartFromFile(dcm_path_slice)
 	if err != nil {
 		return &http.Response{}, err
 	}
 	headers["Content-Type"] = content_type
-	return PostMultipart(url, b, headers)
+	return PostMultipart(url, b, headers, timeout)
 }

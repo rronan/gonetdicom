@@ -13,7 +13,7 @@ func Test_Put(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = Put(url, &dcm, map[string]string{})
+	err = Put(url, &dcm, map[string]string{}, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func Test_Put(t *testing.T) {
 func Test_PutFromFile(t *testing.T) {
 	url := "http://localhost:8000/foo.dcm"
 	DICOM_PATH := "../data/study/1.2.276.0.7230010.3.1.4.0.78767.1672226121.633599.dcm"
-	err := PutFromFile(url, DICOM_PATH, map[string]string{})
+	err := PutFromFile(url, DICOM_PATH, map[string]string{}, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
