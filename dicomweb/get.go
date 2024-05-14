@@ -119,7 +119,10 @@ func ReadMultipartToFile(resp *http.Response, folder string) ([]string, []byte, 
 			return res, []byte{}, err
 		}
 		defer f.Close()
-		io.Copy(f, part)
+		_, err = io.Copy(f, part)
+		if err != nil {
+			return res, []byte{}, err
+		}
 		res = append(res, dcm_path)
 	}
 	return res, []byte{}, nil
