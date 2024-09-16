@@ -48,7 +48,7 @@ func PostMultipart(url string, data *[]byte, headers map[string]string, timeout 
 	if err != nil {
 		return &http.Response{}, err
 	}
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode >= 400 {
 		defer resp.Body.Close()
 		return &http.Response{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}

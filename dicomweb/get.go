@@ -28,7 +28,7 @@ func Get(url string, headers map[string]string, timeout int) (*http.Response, er
 	if err != nil {
 		return &http.Response{}, err
 	}
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode >= 400 {
 		defer resp.Body.Close()
 		return &http.Response{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}

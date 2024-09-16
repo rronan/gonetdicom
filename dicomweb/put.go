@@ -26,7 +26,7 @@ func Put(url string, dcm *dicom.Dataset, headers map[string]string, timeout int)
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode >= 400 {
 		return &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
 	return nil
@@ -56,7 +56,7 @@ func PutFromFile(url string, dcm_path string, headers map[string]string, timeout
 		return err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode >= 400 {
 		return &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
 	return nil
