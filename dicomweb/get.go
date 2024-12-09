@@ -32,7 +32,7 @@ func Get(url string, headers map[string]string, timeout int) (*http.Response, er
 		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
 		if err == nil {
-			return resp, &RequestError{StatusCode: resp.StatusCode, Content: body, Err: errors.New(resp.Status)}
+			return resp, &RequestError{Headers: resp.Header, StatusCode: resp.StatusCode, Content: body, Err: errors.New(resp.Status)}
 		}
 		return &http.Response{}, &RequestError{StatusCode: resp.StatusCode, Err: errors.New(resp.Status)}
 	}
