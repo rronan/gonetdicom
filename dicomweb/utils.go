@@ -15,6 +15,7 @@ func getenv(key, fallback string) string {
 
 type RequestError struct {
 	StatusCode int
+	Content    []byte
 	Err        error
 }
 
