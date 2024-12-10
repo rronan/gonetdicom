@@ -2,6 +2,7 @@ package dicomweb
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 )
 
@@ -14,7 +15,9 @@ func getenv(key, fallback string) string {
 }
 
 type RequestError struct {
+	Headers    http.Header
 	StatusCode int
+	Content    []byte
 	Err        error
 }
 
